@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base URL — Vite proxies /api to localhost:5000 in dev
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://cgpa-calculator-backend-5cmz.onrender.com/api',
 });
 
 // Attach JWT token to every request automatically
