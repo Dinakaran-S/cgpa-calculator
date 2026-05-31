@@ -37,96 +37,25 @@ export default function Dashboard() {
     }
   };
 
-const exportPDF = () => {
+  const exportTranscript = () => {
     if (!report) return;
     const content = report.semesters.map(sem =>
-      `Semester ${sem.semester} — SGPA: ${sem.sgpa.toFixed(2)}\n` +
-      sem.subjects.map(s => `  ${s.name} | Credits: ${s.credits} | Marks: ${s.marks_obtained} | Grade: ${s.grade} | GP: ${s.grade_point}`).join('\n')
+      `Semester ${sem.semester} — SGPA: ${sem.sgpa.toFixed(2)} | Credits: ${sem.total_credits}\n` +
+      sem.subjects.map(s =>
+        `  ${s.name} | Credits: ${s.credits} | Marks: ${s.marks_obtained} | Grade: ${s.grade} | GP: ${s.grade_point}`
+      ).join('\n')
     ).join('\n\n');
 
-    const blob = new Blob([
-      `CGPA Transcript\nAmrita Vishwa Vidyapeetham\nStudent: ${user?.name}\n\nOverall CGPA: ${report.cgpa.toFixed(2)} — ${report.classification}\n\n${content}`
-    ], { type: 'text/plain' });
+    const text = `CGPA Transcript\nAmrita Vishwa Vidyapeetham Chennai\nStudent: ${user?.name}\nGenerated: ${new Date().toLocaleDateString('en-IN')}\n\nOverall CGPA: ${report.cgpa.toFixed(2)} — ${report.classification}\n\n${content}`;
 
+    const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cgpa-transcript-${user?.name}.txt`;
+    a.download = `cgpa-transcript-${user?.name?.replace(/\s/g, '-')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Transcript downloaded!');
-  };
-      const doc = new jsPDF();
-
-      const pageW = doc.internal.pageSize.getWidth();
-      let y = 20;
-
-      // Header
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('CGPA Transcript', pageW / 2, y, { align: 'center' });
-      y += 8;
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(120);
-      doc.text('Amrita Vishwa Vidyapeetham Chennai', pageW / 2, y, { align: 'center' });
-      y += 5;
-      doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, pageW / 2, y, { align: 'center' });
-      y += 5;
-      doc.text(`Student: ${user?.name}`, pageW / 2, y, { align: 'center' });
-      y += 10;
-
-      doc.setTextColor(0);
-
-      // CGPA summary
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Overall CGPA: ${report.cgpa.toFixed(2)}  |  ${report.classification}`, pageW / 2, y, { align: 'center' });
-      y += 10;
-
-      // Each semester
-      for (const sem of report.semesters) {
-        if (y > 250) { doc.addPage(); y = 20; }
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0);
-        doc.text(`Semester ${sem.semester}  —  SGPA: ${sem.sgpa.toFixed(2)}  |  Credits: ${sem.total_credits}`, 14, y);
-        y += 6;
-
-        // Table header
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(80);
-        doc.text('Subject', 14, y);
-        doc.text('Credits', 110, y);
-        doc.text('Marks', 135, y);
-        doc.text('Grade', 158, y);
-        doc.text('GP', 180, y);
-        y += 4;
-
-        doc.setDrawColor(200);
-        doc.line(14, y, 196, y);
-        y += 4;
-
-        // Table rows
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0);
-        for (const sub of sem.subjects) {
-          if (y > 270) { doc.addPage(); y = 20; }
-          doc.text(sub.name.substring(0, 40), 14, y);
-          doc.text(String(sub.credits), 110, y);
-          doc.text(String(sub.marks_obtained ?? '—'), 135, y);
-          doc.text(sub.grade ?? '—', 158, y);
-          doc.text(String(sub.grade_point ?? '—'), 180, y);
-          y += 6;
-        }
-        y += 4;
-      }
-
-      doc.save(`cgpa-transcript-${user?.name?.replace(/\s/g, '-')}.pdf`);
-      toast.success('Transcript downloaded!');
   };
 
   const cgpa = report?.cgpa ?? 0;
@@ -149,7 +78,7 @@ const exportPDF = () => {
           <Link to="/target" className="text-sm text-gray-400 hover:text-white transition hidden sm:block">
             🎯 Target CGPA
           </Link>
-          <button onClick={exportPDF} disabled={!report?.semesters?.length}
+          <button onClick={exportTranscript} disabled={!report?.semesters?.length}
             className="text-sm text-gray-400 hover:text-white transition disabled:opacity-40">
             📄 Export
           </button>
@@ -159,7 +88,6 @@ const exportPDF = () => {
       </nav>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Hi, {user?.name?.split(' ')[0]} 👋</h1>
@@ -183,7 +111,6 @@ const exportPDF = () => {
           <div className="text-center text-gray-500 py-20">Loading your data…</div>
         ) : (
           <>
-            {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
               <StatCard label="CGPA" value={cgpa.toFixed(2)} highlight />
               <StatCard label="Classification" value={classification} small />
@@ -191,7 +118,6 @@ const exportPDF = () => {
               <StatCard label="Subjects" value={totalSubjects} />
             </div>
 
-            {/* Chart */}
             {report?.semesters?.length > 0 && (
               <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 mb-8">
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
@@ -201,7 +127,6 @@ const exportPDF = () => {
               </div>
             )}
 
-            {/* Target CGPA promo card */}
             {report?.semesters?.length > 0 && (
               <Link to="/target" className="block mb-6">
                 <div className="bg-dark-800 border border-primary-500/30 hover:border-primary-500/60 rounded-2xl p-5 flex items-center justify-between transition group">
@@ -214,7 +139,6 @@ const exportPDF = () => {
               </Link>
             )}
 
-            {/* Semester Cards */}
             {report?.semesters?.length === 0 ? (
               <div className="text-center py-20 text-gray-500">
                 <p className="text-5xl mb-4">📚</p>
