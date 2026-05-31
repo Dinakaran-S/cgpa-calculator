@@ -43,7 +43,7 @@ export default function Dashboard() {
     setExporting(true);
     try {
       // Dynamically import jsPDF
-      const { default: jsPDF } = await import('jspdf');
+      const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm');
       const doc = new jsPDF();
 
       const pageW = doc.internal.pageSize.getWidth();
