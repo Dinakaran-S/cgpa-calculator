@@ -13,7 +13,6 @@ export default function Dashboard() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   const fetchReport = async () => {
     try {
@@ -38,12 +37,25 @@ export default function Dashboard() {
     }
   };
 
-  const exportPDF = async () => {
+const exportPDF = () => {
     if (!report) return;
-    setExporting(true);
-    try {
-      // Dynamically import jsPDF
-      const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm');
+    const content = report.semesters.map(sem =>
+      `Semester ${sem.semester} — SGPA: ${sem.sgpa.toFixed(2)}\n` +
+      sem.subjects.map(s => `  ${s.name} | Credits: ${s.credits} | Marks: ${s.marks_obtained} | Grade: ${s.grade} | GP: ${s.grade_point}`).join('\n')
+    ).join('\n\n');
+
+    const blob = new Blob([
+      `CGPA Transcript\nAmrita Vishwa Vidyapeetham\nStudent: ${user?.name}\n\nOverall CGPA: ${report.cgpa.toFixed(2)} — ${report.classification}\n\n${content}`
+    ], { type: 'text/plain' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cgpa-transcript-${user?.name}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Transcript downloaded!');
+  };
       const doc = new jsPDF();
 
       const pageW = doc.internal.pageSize.getWidth();
@@ -143,9 +155,9 @@ export default function Dashboard() {
           <Link to="/target" className="text-sm text-gray-400 hover:text-white transition hidden sm:block">
             🎯 Target CGPA
           </Link>
-          <button onClick={exportPDF} disabled={exporting || !report?.semesters?.length}
+          <button onClick={exportPDF} disabled={!report?.semesters?.length}
             className="text-sm text-gray-400 hover:text-white transition disabled:opacity-40">
-            {exporting ? 'Exporting…' : '📄 Export PDF'}
+            📄 Export
           </button>
           <span className="text-sm text-gray-400 hidden sm:block">{user?.name}</span>
           <button onClick={logout} className="text-sm text-gray-400 hover:text-white transition">Sign out</button>
