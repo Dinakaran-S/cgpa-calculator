@@ -1,38 +1,58 @@
-# 🎓 CGPA Calculator — Amrita Vishwa Vidyapeetham
+# CGPA Calculator — Amrita Vishwa Vidyapeetham
 
-A full-stack web app to calculate and track your CGPA across semesters using Amrita's official grading scheme.
+A full-stack web application to calculate and track CGPA across semesters using Amrita's official grading scheme.
 
-**Stack:** React + Vite · Node.js + Express · PostgreSQL · JWT Auth · Docker
+🔗 **Live Demo:** [cgpa-calculator-five-black.vercel.app](https://cgpa-calculator-five-black.vercel.app)
+
+---
+
+## Screenshots
+
+> Register → Add subjects → Track your CGPA across semesters with a live bar chart.
 
 ---
 
 ## Features
 
-- 🔐 Student registration & login with JWT authentication
-- ➕ Add subjects with marks and credits per semester
-- 📊 Automatic grade and grade point conversion (Amrita rules)
-- 📈 SGPA per semester + cumulative CGPA
-- 🎨 Bar chart of semester-wise performance
-- 🏷️ Classification: First Class with Distinction / First Class / Second Class / Pass
-- 👨‍💼 Admin panel to manage grading rules for multiple universities
-- 🌙 Dark mode UI
+- Student registration and login with JWT authentication
+- Add subjects with marks and credits per semester
+- Automatic grade and grade point conversion using Amrita's B.Tech 2023 regulations
+- SGPA calculated per semester, CGPA calculated across all semesters
+- Bar chart showing semester-wise performance
+- Degree classification: First Class with Distinction / First Class / Second Class / Pass
+- Dark mode UI
 
 ---
 
-## Amrita Grading Scheme (B.Tech 2023 Regulations)
+## Grading Scheme (B.Tech Regulations 2023)
 
-| Marks | Grade | Grade Points |
-|-------|-------|-------------|
-| 91–100 | O | 10 |
-| 81–90 | A+ | 9 |
-| 71–80 | A | 8 |
-| 61–70 | B+ | 7 |
-| 51–60 | B | 6 |
-| 45–50 | C | 5 |
-| 0–44 | F | 0 |
+| Marks   | Grade | Grade Points |
+|---------|-------|-------------|
+| 91–100  | O     | 10          |
+| 81–90   | A+    | 9           |
+| 71–80   | A     | 8           |
+| 61–70   | B+    | 7           |
+| 51–60   | B     | 6           |
+| 45–50   | C     | 5           |
+| 0–44    | F     | 0           |
 
-**SGPA** = Σ(Ci × GPi) / Σ Ci  
-**CGPA** = Σ(Semester Credits × SGPA) / Σ(Semester Credits)
+**Formulas used:**
+
+SGPA = Σ(Credits × Grade Points) / Σ Credits
+
+CGPA = Σ(Semester Credits × SGPA) / Σ Semester Credits
+
+---
+
+## Tech Stack
+
+| Layer     | Technology                        |
+|-----------|-----------------------------------|
+| Frontend  | React.js, Vite, Tailwind CSS, Chart.js |
+| Backend   | Node.js, Express.js               |
+| Database  | PostgreSQL                        |
+| Auth      | JWT (JSON Web Tokens), bcrypt     |
+| Deployment| Vercel (frontend), Render (backend + DB) |
 
 ---
 
@@ -42,136 +62,93 @@ A full-stack web app to calculate and track your CGPA across semesters using Amr
 cgpa-calculator/
 ├── backend/
 │   ├── src/
-│   │   ├── config/       # Database connection
-│   │   ├── controllers/  # Auth, GPA, Admin logic
-│   │   ├── middleware/   # JWT auth guard
-│   │   └── routes/       # Express route definitions
-│   ├── tests/            # Jest + Supertest tests
-│   ├── .env.example
-│   └── Dockerfile
+│   │   ├── config/         # PostgreSQL connection
+│   │   ├── controllers/    # Auth, GPA, Admin logic
+│   │   ├── middleware/     # JWT auth guard
+│   │   └── routes/         # Express route definitions
+│   └── tests/              # Jest + Supertest tests
 ├── frontend/
-│   ├── src/
-│   │   ├── components/   # SemesterCard, Chart, Modal, etc.
-│   │   ├── context/      # AuthContext (React Context API)
-│   │   ├── pages/        # Login, Register, Dashboard
-│   │   └── utils/        # Axios instance with JWT interceptor
-│   └── Dockerfile
-├── database/
-│   └── schema.sql        # All tables + Amrita grading seed
-└── docker-compose.yml
+│   └── src/
+│       ├── components/     # SemesterCard, Chart, Modal
+│       ├── context/        # AuthContext (React Context API)
+│       ├── pages/          # Login, Register, Dashboard
+│       └── utils/          # Axios instance with JWT interceptor
+└── database/
+    └── schema.sql          # Tables + Amrita grading rules seed
 ```
 
 ---
 
-## Quick Start (Docker — recommended)
+## Run Locally
 
+### Prerequisites
+- Node.js
+- PostgreSQL
+
+### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/cgpa-calculator
+git clone https://github.com/Dinakaran-S/cgpa-calculator.git
 cd cgpa-calculator
-docker-compose up --build
 ```
 
-Then open http://localhost:5173
-
----
-
-## Manual Setup (without Docker)
-
-### 1. Database
-
-Install PostgreSQL, then:
-
+### 2. Set up the database
 ```bash
 createdb cgpa_calculator
 psql cgpa_calculator < database/schema.sql
 ```
 
-### 2. Backend
-
+### 3. Backend
 ```bash
-cd backend
+cd cgpa-calculator/backend
 cp .env.example .env
-# Edit .env with your DATABASE_URL and a JWT_SECRET
+# Fill in DATABASE_URL and JWT_SECRET in .env
 npm install
 npm run dev
 ```
 
-Runs on http://localhost:5000
-
-### 3. Frontend
-
+### 4. Frontend
 ```bash
-cd frontend
+cd cgpa-calculator/frontend
 npm install
 npm run dev
 ```
 
-Runs on http://localhost:5173
+Open `http://localhost:5173`
 
 ---
 
-## API Reference
+## API Endpoints
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | `/api/auth/register` | No | Create account |
-| POST | `/api/auth/login` | No | Login, get JWT |
+| POST | `/api/auth/login` | No | Login, receive JWT |
 | GET | `/api/auth/me` | Yes | Get current user |
 | POST | `/api/gpa/subject` | Yes | Add subject with marks |
 | PUT | `/api/gpa/subject/:id` | Yes | Update subject |
 | DELETE | `/api/gpa/subject/:id` | Yes | Delete subject |
 | GET | `/api/gpa/report` | Yes | Full CGPA report |
 | POST | `/api/gpa/calculate` | No | Quick SGPA (no save) |
-| GET | `/api/admin/users` | Admin | List all users |
-| GET | `/api/admin/grading-rules` | Admin | List all rules |
-| POST | `/api/admin/grading-rules` | Admin | Add/update rule |
 
 ---
 
 ## Deployment
 
-### Backend → Render
-
-1. Push to GitHub
-2. Create a new Web Service on [render.com](https://render.com)
-3. Root directory: `backend`
-4. Build command: `npm install`
-5. Start command: `node src/server.js`
-6. Add environment variables (DATABASE_URL, JWT_SECRET, NODE_ENV=production)
-
-### Frontend → Vercel
-
-1. Create a new project on [vercel.com](https://vercel.com)
-2. Root directory: `frontend`
-3. Framework preset: Vite
-4. Add env variable: `VITE_API_URL=https://your-render-url.onrender.com`
-   - Then update `frontend/src/utils/api.js` baseURL to use `import.meta.env.VITE_API_URL`
-
-### Database → Render PostgreSQL or Supabase
-
-Both are free tier. Get the connection string and set it as `DATABASE_URL` in your backend env.
+- **Frontend** → [Vercel](https://vercel.com) — root directory: `cgpa-calculator/frontend`
+- **Backend** → [Render](https://render.com) — root directory: `cgpa-calculator/backend`
+- **Database** → Render PostgreSQL (free tier)
 
 ---
 
-## Running Tests
+## What I Learned
 
-```bash
-cd backend
-npm test
-```
-
----
-
-## What I Learned Building This
-
-- **JWT authentication** flow: token generation, storage, and protected routes
-- **React Context API** for global auth state
-- **Axios interceptors** to automatically attach tokens to every request
-- **PostgreSQL** schema design with foreign keys and cascades
-- **Express middleware** pattern: auth guard reusable across all protected routes
-- **CGPA formula**: weighted average across semesters
-- **Docker Compose** to wire up multiple services
+- JWT authentication flow — token generation, protected routes, interceptors
+- React Context API for global auth state management
+- Axios interceptors to automatically attach tokens to every request
+- PostgreSQL schema design with foreign keys and cascading deletes
+- Express middleware pattern for reusable route protection
+- Deploying a full-stack app across Vercel + Render
 
 ---
 
-*Built by [Your Name] — CSE, Amrita Vishwa Vidyapeetham Chennai*
+*Built by Dinakaran S — B.Tech CSE, Amrita Vishwa Vidyapeetham Chennai (2025)*

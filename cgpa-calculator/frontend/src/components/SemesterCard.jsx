@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import api from '../utils/api';
-import toast from 'react-hot-toast';
+import EditSubjectModal from './EditSubjectModal';
 
 const GRADE_COLORS = {
   O: 'text-emerald-400', 'A+': 'text-green-400', A: 'text-lime-400',
@@ -9,6 +8,7 @@ const GRADE_COLORS = {
 
 export default function SemesterCard({ sem, onDelete, onRefresh }) {
   const [open, setOpen] = useState(true);
+  const [editingSubject, setEditingSubject] = useState(null);
 
   return (
     <div className="bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden">
@@ -63,18 +63,36 @@ export default function SemesterCard({ sem, onDelete, onRefresh }) {
                   </td>
                   <td className="px-3 py-3 text-center text-gray-300 font-mono">{sub.grade_point ?? '—'}</td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => onDelete(sub.id, sem.semester)}
-                      className="text-gray-500 hover:text-red-400 transition text-xs"
-                    >
-                      ✕
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => setEditingSubject(sub)}
+                        className="text-gray-500 hover:text-primary-400 transition text-xs"
+                        title="Edit"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => onDelete(sub.id, sem.semester)}
+                        className="text-gray-500 hover:text-red-400 transition text-xs"
+                        title="Delete"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {editingSubject && (
+        <EditSubjectModal
+          subject={editingSubject}
+          onClose={() => setEditingSubject(null)}
+          onUpdated={() => { setEditingSubject(null); onRefresh(); }}
+        />
       )}
     </div>
   );

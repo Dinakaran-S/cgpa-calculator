@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchReport = async () => {
     try {
@@ -26,13 +28,98 @@ export default function Dashboard() {
 
   useEffect(() => { fetchReport(); }, []);
 
-  const handleDelete = async (subjectId, semester) => {
+  const handleDelete = async (subjectId) => {
     try {
       await api.delete(`/gpa/subject/${subjectId}`);
       toast.success('Subject removed.');
       fetchReport();
     } catch {
       toast.error('Failed to delete.');
+    }
+  };
+
+  const exportPDF = async () => {
+    if (!report) return;
+    setExporting(true);
+    try {
+      // Dynamically import jsPDF
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+
+      const pageW = doc.internal.pageSize.getWidth();
+      let y = 20;
+
+      // Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CGPA Transcript', pageW / 2, y, { align: 'center' });
+      y += 8;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120);
+      doc.text('Amrita Vishwa Vidyapeetham Chennai', pageW / 2, y, { align: 'center' });
+      y += 5;
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, pageW / 2, y, { align: 'center' });
+      y += 5;
+      doc.text(`Student: ${user?.name}`, pageW / 2, y, { align: 'center' });
+      y += 10;
+
+      doc.setTextColor(0);
+
+      // CGPA summary
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Overall CGPA: ${report.cgpa.toFixed(2)}  |  ${report.classification}`, pageW / 2, y, { align: 'center' });
+      y += 10;
+
+      // Each semester
+      for (const sem of report.semesters) {
+        if (y > 250) { doc.addPage(); y = 20; }
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text(`Semester ${sem.semester}  —  SGPA: ${sem.sgpa.toFixed(2)}  |  Credits: ${sem.total_credits}`, 14, y);
+        y += 6;
+
+        // Table header
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(80);
+        doc.text('Subject', 14, y);
+        doc.text('Credits', 110, y);
+        doc.text('Marks', 135, y);
+        doc.text('Grade', 158, y);
+        doc.text('GP', 180, y);
+        y += 4;
+
+        doc.setDrawColor(200);
+        doc.line(14, y, 196, y);
+        y += 4;
+
+        // Table rows
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0);
+        for (const sub of sem.subjects) {
+          if (y > 270) { doc.addPage(); y = 20; }
+          doc.text(sub.name.substring(0, 40), 14, y);
+          doc.text(String(sub.credits), 110, y);
+          doc.text(String(sub.marks_obtained ?? '—'), 135, y);
+          doc.text(sub.grade ?? '—', 158, y);
+          doc.text(String(sub.grade_point ?? '—'), 180, y);
+          y += 6;
+        }
+        y += 4;
+      }
+
+      doc.save(`cgpa-transcript-${user?.name?.replace(/\s/g, '-')}.pdf`);
+      toast.success('Transcript downloaded!');
+    } catch (err) {
+      console.error(err);
+      toast.error('PDF export failed. Try again.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -53,13 +140,15 @@ export default function Dashboard() {
           <span className="text-xs text-gray-500 hidden sm:block">· Amrita Vishwa Vidyapeetham</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-400 hidden sm:block">{user?.name}</span>
-          <button
-            onClick={logout}
-            className="text-sm text-gray-400 hover:text-white transition"
-          >
-            Sign out
+          <Link to="/target" className="text-sm text-gray-400 hover:text-white transition hidden sm:block">
+            🎯 Target CGPA
+          </Link>
+          <button onClick={exportPDF} disabled={exporting || !report?.semesters?.length}
+            className="text-sm text-gray-400 hover:text-white transition disabled:opacity-40">
+            {exporting ? 'Exporting…' : '📄 Export PDF'}
           </button>
+          <span className="text-sm text-gray-400 hidden sm:block">{user?.name}</span>
+          <button onClick={logout} className="text-sm text-gray-400 hover:text-white transition">Sign out</button>
         </div>
       </nav>
 
@@ -70,12 +159,18 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold">Hi, {user?.name?.split(' ')[0]} 👋</h1>
             <p className="text-gray-400 text-sm mt-0.5">Track your academic performance</p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-primary-500 hover:bg-primary-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition flex items-center gap-2"
-          >
-            <span className="text-lg leading-none">+</span> Add Subject
-          </button>
+          <div className="flex items-center gap-3">
+            <Link to="/target"
+              className="border border-dark-600 hover:border-primary-500 text-gray-300 hover:text-white font-medium px-4 py-2.5 rounded-xl text-sm transition sm:hidden">
+              🎯 Target
+            </Link>
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-primary-500 hover:bg-primary-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition flex items-center gap-2"
+            >
+              <span className="text-lg leading-none">+</span> Add Subject
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -98,6 +193,19 @@ export default function Dashboard() {
                 </h2>
                 <CGPAChart semesters={report.semesters} />
               </div>
+            )}
+
+            {/* Target CGPA promo card */}
+            {report?.semesters?.length > 0 && (
+              <Link to="/target" className="block mb-6">
+                <div className="bg-dark-800 border border-primary-500/30 hover:border-primary-500/60 rounded-2xl p-5 flex items-center justify-between transition group">
+                  <div>
+                    <p className="font-semibold text-white">🎯 Target CGPA Calculator</p>
+                    <p className="text-sm text-gray-400 mt-0.5">Find out what you need to score next semester</p>
+                  </div>
+                  <span className="text-primary-500 text-sm group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </Link>
             )}
 
             {/* Semester Cards */}
