@@ -127,12 +127,6 @@ const exportPDF = () => {
 
       doc.save(`cgpa-transcript-${user?.name?.replace(/\s/g, '-')}.pdf`);
       toast.success('Transcript downloaded!');
-    } catch (err) {
-      console.error(err);
-      toast.error('PDF export failed. Try again.');
-    } finally {
-      setExporting(false);
-    }
   };
 
   const cgpa = report?.cgpa ?? 0;
